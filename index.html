@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flip 7 Scorekeeper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#3fb4b8; --teal-d:#1f7f86; --teal-dd:#13545a; --cream:#fdf8e8; --yellow:#f6c935;
+  --red:#e2483d; --navy:#1d2b5c; --green:#5bb55a; --orange:#f08a2c; --ink:#14203f;
+  --card:#ffffff; --muted:#5f6b85;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--teal-dd);color:var(--ink);font-family:Barlow,system-ui,sans-serif}
+body{
+  min-height:100vh;
+  background:radial-gradient(circle at 20% 0%,#4cc7c9 0,#2a9aa1 40%,#13545a 100%) fixed;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 90px) env(safe-area-inset-left);
+}
+.wrap{max-width:640px;margin:0 auto;padding:16px}
+header{text-align:center;padding:14px 0 6px}
+.logo{font-family:Bungee,sans-serif;font-size:44px;line-height:1;color:var(--yellow);
+  text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--navy);letter-spacing:1px}
+.logo b{color:var(--yellow);font-size:56px}
+.tag{font-family:"Barlow Condensed";font-weight:700;color:var(--cream);letter-spacing:3px;text-transform:uppercase;font-size:13px;margin-top:8px}
+.panel{background:var(--cream);border:3px solid var(--navy);border-radius:18px;padding:16px;margin:14px 0;box-shadow:0 5px 0 var(--navy)}
+h2{font-family:Bungee;font-size:18px;margin:0 0 12px;color:var(--navy);letter-spacing:.5px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=text],input[type=number]{font:600 17px Barlow;padding:12px 14px;border:2px solid var(--navy);border-radius:12px;width:100%;background:#fff;color:var(--ink)}
+input:focus{outline:3px solid var(--yellow)}
+button{font-family:"Barlow Condensed";font-weight:700;font-size:17px;letter-spacing:.5px;border:2px solid var(--navy);border-radius:12px;padding:11px 16px;cursor:pointer;background:#fff;color:var(--navy);box-shadow:0 3px 0 var(--navy);transition:transform .05s}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--navy)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-y{background:var(--yellow)} .btn-r{background:var(--red);color:#fff} .btn-g{background:var(--green);color:#fff} .btn-t{background:var(--teal);color:#fff}
+.btn-big{width:100%;font-size:21px;padding:15px}
+.small{font-size:14px;padding:7px 11px;box-shadow:0 2px 0 var(--navy)}
+.plist{list-style:none;margin:12px 0 0;padding:0}
+.plist li{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#fff;border:2px solid var(--navy);border-radius:12px;margin-bottom:7px;font-weight:700;font-size:17px}
+.plist li .n{flex:1}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--navy);flex:none}
+.x{background:none;border:none;box-shadow:none;font-size:22px;padding:0 6px;color:var(--red)}
+.hint{color:var(--muted);font-size:14px;margin:8px 0 0}
+.settings{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.settings label{font-weight:700;color:var(--navy)}
+.settings input{width:110px}
+
+/* scoreboard */
+.board{display:flex;flex-direction:column;gap:8px}
+.pcard{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;overflow:hidden}
+.pcard .rank{font-family:Bungee;font-size:18px;width:26px;text-align:center;color:var(--navy)}
+.pcard .info{flex:1;min-width:0}
+.pcard .nm{font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .bar{height:8px;border-radius:5px;background:#e7e2cf;margin-top:6px;overflow:hidden}
+.pcard .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--teal),var(--yellow),var(--red))}
+.pcard .tot{font-family:Bungee;font-size:28px;color:var(--navy);min-width:70px;text-align:right}
+.pcard .last{font-size:13px;color:var(--muted);font-weight:600}
+.pcard.lead{border-color:var(--orange);box-shadow:0 0 0 3px var(--yellow) inset}
+.badge{display:inline-block;font:700 11px "Barlow Condensed";letter-spacing:1px;background:var(--navy);color:var(--yellow);padding:2px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:12px}
+.roundtitle{font-family:Bungee;color:var(--navy);font-size:18px}
+
+/* round entry */
+.entry{display:flex;flex-direction:column;gap:8px}
+.erow{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 10px}
+.erow .nm{flex:1;font-weight:700;font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.erow .val{font-family:Bungee;font-size:20px;min-width:56px;text-align:right;color:var(--navy)}
+.erow .val.unset{color:#c4bfae}
+.erow .val.bust{color:var(--red);font-size:15px}
+.erow .detail{font-size:12px;color:var(--muted);font-weight:600}
+.erow.done{background:#f3fbf3}
+
+/* history */
+.hist{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;background:#fff;border-radius:10px;overflow:hidden}
+th,td{padding:7px 8px;text-align:center;border-bottom:1px solid #e3dec9;white-space:nowrap}
+th{background:var(--navy);color:var(--yellow);font-family:"Barlow Condensed";letter-spacing:.5px;font-size:15px}
+td.r{font-weight:700;color:var(--muted)}
+td.b{color:var(--red);font-weight:700}
+td.f7{color:var(--green);font-weight:700}
+tr.tot td{font-family:Bungee;background:#fff6d1;color:var(--navy)}
+tr.clickable{cursor:pointer}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,20,40,.65);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.on{display:flex}
+.sheet{background:var(--cream);width:100%;max-width:560px;border-radius:22px 22px 0 0;border:3px solid var(--navy);border-bottom:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:94vh;overflow-y:auto;animation:up .18s ease-out}
+@media(min-width:600px){.modal{align-items:center}.sheet{border-radius:22px;border-bottom:3px solid var(--navy)}}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.sheet h3{font-family:Bungee;margin:0;color:var(--navy);font-size:20px}
+.lbl{font:700 13px "Barlow Condensed";letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin:14px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.chip{aspect-ratio:3/4;border-radius:9px;font-family:Bungee;font-size:19px;padding:0;display:flex;align-items:center;justify-content:center;background:#fff}
+.chip.on{background:var(--navy);color:var(--yellow);transform:translateY(-2px);box-shadow:0 5px 0 var(--orange)}
+.mods{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.mod{font-family:Bungee;font-size:15px;padding:10px 0;background:#fff;color:var(--orange)}
+.mod.on{background:var(--orange);color:#fff}
+.mod.x2.on{background:var(--red)}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:12px 14px;background:var(--navy);border-radius:14px;color:var(--cream)}
+.total .big{font-family:Bungee;font-size:36px;color:var(--yellow)}
+.total .math{font-size:13px;opacity:.85;font-weight:600}
+.f7flag{font-family:Bungee;color:var(--green);font-size:14px}
+.sheetbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.bustbtn.on{background:var(--red);color:#fff}
+.manual{display:flex;gap:8px;align-items:center;margin-top:10px}
+.manual input{flex:1}
+
+/* winner */
+.winner{text-align:center;background:var(--yellow);border:3px solid var(--navy);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 5px 0 var(--navy)}
+.winner .t{font-family:Bungee;font-size:16px;color:var(--red)}
+.winner .w{font-family:Bungee;font-size:34px;color:var(--navy);line-height:1.1;margin:6px 0}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(19,84,90,.95) 30%);z-index:10}
+.dock .inner{max-width:640px;margin:0 auto}
+.hidden{display:none!important}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">FLIP<b>7</b></div>
+    <div class="tag">Scorekeeper · Race to <span id="tgtLbl">200</span></div>
+  </header>
+
+  <!-- SETUP -->
+  <section id="setup">
+    <div class="panel">
+      <h2>Who's playing?</h2>
+      <form id="addForm" class="row">
+        <input type="text" id="nameIn" placeholder="Player name" maxlength="18" autocomplete="off">
+        <button class="btn-y" type="submit">Add</button>
+      </form>
+      <ul class="plist" id="plist"></ul>
+      <p class="hint" id="pcount"></p>
+      <div class="settings">
+        <label for="tgtIn">Winning score</label>
+        <input type="number" id="tgtIn" value="200" min="50" step="10" inputmode="numeric">
+      </div>
+    </div>
+    <button class="btn-big btn-r" id="startBtn">Start game</button>
+  </section>
+
+  <!-- GAME -->
+  <section id="game" class="hidden">
+    <div id="winnerBox"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="roundtitle">Standings</span>
+        <span style="font-weight:700;color:var(--muted)" id="roundInfo"></span>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="panel" id="entryPanel">
+      <div class="toolbar">
+        <span class="roundtitle" id="entryTitle">Round 1</span>
+        <span style="font-size:14px;color:var(--muted);font-weight:600" id="dealerLbl"></span>
+      </div>
+      <div class="entry" id="entry"></div>
+      <p class="hint">Tap a player to count their cards. Quick buttons: <b>Bust</b> = 0.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <span class="roundtitle">Score sheet</span>
+        <button class="small" id="undoBtn">Undo last round</button>
+      </div>
+      <div class="hist" id="hist"></div>
+      <p class="hint">Tap a past round to fix a score.</p>
+    </div>
+
+    <div class="row" style="gap:8px">
+      <button style="flex:1" id="rematchBtn">Rematch (same players)</button>
+      <button style="flex:1" class="btn-r" id="newBtn">New game</button>
+    </div>
+  </section>
+</div>
+
+<div class="dock hidden" id="dock"><div class="inner"><button class="btn-big btn-g" id="saveRound">Save round</button></div></div>
+
+<!-- calculator modal -->
+<div class="modal" id="calc">
+  <div class="sheet">
+    <div class="row" style="justify-content:space-between">
+      <h3 id="calcName">Player</h3>
+      <button class="small" id="calcClose">✕</button>
+    </div>
+    <div class="lbl">Number cards (tap each one in their line)</div>
+    <div class="grid" id="nums"></div>
+    <div class="lbl">Modifiers</div>
+    <div class="mods" id="mods"></div>
+    <div class="total">
+      <div><div class="math" id="math">—</div><div class="f7flag" id="f7flag"></div></div>
+      <div class="big" id="calcTotal">0</div>
+    </div>
+    <div class="manual">
+      <input type="number" id="manualIn" placeholder="…or type a score" inputmode="numeric">
+    </div>
+    <div class="sheetbtns">
+      <button class="bustbtn" id="bustBtn">💥 Bust</button>
+      <button class="btn-g" id="calcSave">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- confirm modal -->
+<div class="modal" id="confirm">
+  <div class="sheet" style="text-align:center">
+    <h3 id="cfMsg">Sure?</h3>
+    <div class="sheetbtns">
+      <button id="cfNo">Cancel</button>
+      <button class="btn-r" id="cfYes">Yes</button>
+    </div>
+  </div>
+</div>
+
+<canvas class="confetti" id="confetti"></canvas>
+
+<script>
+const COLORS=['#e2483d','#f6c935','#3fb4b8','#5bb55a','#f08a2c','#7b5cd6','#1d2b5c','#e86fa8','#8bc34a','#00897b','#c0392b','#ffb300','#5c6bc0','#26a69a','#ab47bc','#ef6c00','#6d4c41','#455a64','#d81b60','#43a047'];
+const MAX_PLAYERS=20;
+const KEY='flip7-scorekeeper-v1';
+let S={phase:'setup',players:[],target:200,rounds:[],draft:{},editing:null};
+let uid=1;
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.players){S=Object.assign(S,v);uid=Math.max(0,...S.players.map(p=>p.id))+1}}catch(e){}}
+
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- scoring ---------- */
+function score(e){
+  if(!e) return null;
+  if(e.bust) return 0;
+  if(e.manual!==null && e.manual!==undefined && e.manual!=='') return Number(e.manual)||0;
+  let n=e.nums.reduce((a,b)=>a+b,0);
+  if(e.x2) n*=2;
+  n+=e.plus.reduce((a,b)=>a+b,0);
+  if(e.nums.length===7) n+=15;
+  return n;
+}
+function blank(){return{nums:[],x2:false,plus:[],bust:false,manual:null}}
+function totals(){
+  const t={};S.players.forEach(p=>t[p.id]=0);
+  S.rounds.forEach(r=>S.players.forEach(p=>t[p.id]+=score(r[p.id])||0));
+  return t;
+}
+function describe(e){
+  if(!e) return '';
+  if(e.bust) return 'Bust';
+  if(e.manual!==null&&e.manual!==undefined&&e.manual!=='') return 'Typed';
+  const parts=[];
+  if(e.nums.length) parts.push(e.nums.slice().sort((a,b)=>a-b).join(' '));
+  if(e.x2) parts.push('×2');
+  e.plus.forEach(p=>parts.push('+'+p));
+  if(e.nums.length===7) parts.push('FLIP 7!');
+  return parts.join(' · ');
+}
+
+/* ---------- setup ---------- */
+function renderSetup(){
+  $('plist').innerHTML=S.players.map((p,i)=>`<li><span class="dot" style="background:${p.color}"></span><span class="n">${esc(p.name)}</span>
+    <button class="x" data-up="${i}" title="Move up" style="color:var(--navy);font-size:18px">↑</button>
+    <button class="x" data-del="${p.id}" title="Remove">✕</button></li>`).join('');
+  const n=S.players.length;
+  $('pcount').textContent = n===0?'Add 3 or more players (the box says 3+). Order = turn order; first player deals first.'
+    : `${n} player${n>1?'s':''}${n<3?' — Flip 7 is best with 3+':''}${n>=MAX_PLAYERS?' (max reached)':''}`;
+  $('startBtn').disabled=n<2;
+  $('tgtIn').value=S.target;
+}
+$('addForm').onsubmit=e=>{
+  e.preventDefault();
+  const v=$('nameIn').value.trim();
+  if(!v||S.players.length>=MAX_PLAYERS) return;
+  S.players.push({id:uid++,name:v,color:COLORS[S.players.length%COLORS.length]});
+  $('nameIn').value='';$('nameIn').focus();save();renderSetup();
+};
+$('plist').onclick=e=>{
+  const d=e.target.dataset;
+  if(d.del){S.players=S.players.filter(p=>p.id!=d.del);}
+  if(d.up!==undefined){const i=+d.up;if(i>0){[S.players[i-1],S.players[i]]=[S.players[i],S.players[i-1]]}}
+  save();renderSetup();
+};
+$('tgtIn').onchange=()=>{S.target=Math.max(10,parseInt($('tgtIn').value)||200);save();renderSetup();$('tgtLbl').textContent=S.target};
+$('startBtn').onclick=()=>{S.phase='game';S.rounds=[];S.draft={};save();render()};
+
+/* ---------- game ---------- */
+function winnerState(){
+  const t=totals();
+  const max=Math.max(...Object.values(t));
+  if(S.rounds.length===0||max<S.target) return null;
+  const top=S.players.filter(p=>t[p.id]===max);
+  return {top,max};
+}
+function renderGame(){
+  const t=totals();
+  const sorted=S.players.slice().sort((a,b)=>t[b.id]-t[a.id]);
+  const max=Math.max(...Object.values(t));
+  const lastR=S.rounds[S.rounds.length-1];
+  $('board').innerHTML=sorted.map((p,i)=>{
+    const pct=Math.min(100,t[p.id]/S.target*100);
+    const ls=lastR?score(lastR[p.id]):null;
+    const lead=t[p.id]===max&&max>0;
+    const rank=sorted.findIndex(q=>t[q.id]===t[p.id])+1;
+    const lastTxt=lastR?(lastR[p.id]&&lastR[p.id].bust?'busted last round':(lastR[p.id]&&lastR[p.id].nums.length===7?`+${ls} last round · FLIP 7!`:`+${ls} last round`)):'';
+    return `<div class="pcard ${lead?'lead':''}">
+      <span class="rank">${rank}</span><span class="dot" style="background:${p.color}"></span>
+      <div class="info"><div class="nm">${esc(p.name)}${lead?'<span class="badge">LEADER</span>':''}</div>
+        <div class="last">${lastTxt||`${S.target-t[p.id]} to go`}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div></div>
+      <div class="tot">${t[p.id]}</div></div>`;
+  }).join('');
+  $('roundInfo').textContent=S.rounds.length?`${S.rounds.length} round${S.rounds.length>1?'s':''} played`:'';
+
+  const w=winnerState();
+  if(w&&w.top.length===1){
+    $('winnerBox').innerHTML=`<div class="winner"><div class="t">🏆 WINNER 🏆</div><div class="w">${esc(w.top[0].name)}</div><div style="font-weight:700">${w.max} points in ${S.rounds.length} rounds</div></div>`;
+    $('entryPanel').classList.add('hidden');$('dock').classList.add('hidden');
+  }else{
+    $('winnerBox').innerHTML=w?`<div class="winner"><div class="t">TIE AT THE TOP</div><div class="w" style="font-size:24px">${w.top.map(p=>esc(p.name)).join(' & ')}</div><div style="font-weight:700">${w.max} each — play another round to settle it</div></div>`:'';
+    $('entryPanel').classList.remove('hidden');$('dock').classList.remove('hidden');
+  }
+
+  // entry
+  const rn=S.rounds.length+1;
+  $('entryTitle').textContent='Round '+rn;
+  const dealer=S.players[(rn-1)%S.players.length];
+  $('dealerLbl').innerHTML=`Dealer: <b style="color:${dealer.color}">${esc(dealer.name)}</b>`;
+  $('entry').innerHTML=S.players.map(p=>{
+    const e=S.draft[p.id];const s=score(e);
+    return `<div class="erow ${e?'done':''}" data-open="${p.id}">
+      <span class="dot" style="background:${p.color}"></span>
+      <div style="flex:1;min-width:0"><div class="nm">${esc(p.name)}</div><div class="detail">${e?esc(describe(e)):'tap to score'}</div></div>
+      <button class="small" data-qbust="${p.id}">Bust</button>
+      <span class="val ${e?(e.bust?'bust':''):'unset'}">${e?(e.bust?'BUST':s):'—'}</span></div>`;
+  }).join('');
+  const missing=S.players.filter(p=>!S.draft[p.id]).length;
+  $('saveRound').textContent=missing?`Save round (${missing} left — counts as 0)`:'Save round '+rn;
+  $('saveRound').disabled=Object.keys(S.draft).length===0;
+
+  // history
+  if(!S.rounds.length){$('hist').innerHTML='<p class="hint" style="margin:0">No rounds yet.</p>';$('undoBtn').disabled=true;}
+  else{
+    $('undoBtn').disabled=false;
+    let h='<table><tr><th>Rd</th>'+S.players.map(p=>`<th>${esc(p.name)}</th>`).join('')+'</tr>';
+    S.rounds.forEach((r,i)=>{
+      h+=`<tr class="clickable" data-round="${i}"><td class="r">${i+1}</td>`+S.players.map(p=>{
+        const e=r[p.id];const s=score(e);
+        const cls=e&&e.bust?'b':(e&&e.nums&&e.nums.length===7?'f7':'');
+        return `<td class="${cls}">${e&&e.bust?'💥':s===null?0:s}</td>`;}).join('')+'</tr>';
+    });
+    h+='<tr class="tot"><td>Σ</td>'+S.players.map(p=>`<td>${t[p.id]}</td>`).join('')+'</tr></table>';
+    $('hist').innerHTML=h;
+  }
+}
+$('entry').onclick=e=>{
+  const q=e.target.closest('[data-qbust]');
+  if(q){e.stopPropagation();const id=q.dataset.qbust;S.draft[id]=Object.assign(blank(),{bust:true});save();renderGame();return;}
+  const r=e.target.closest('[data-open]');
+  if(r) openCalc(+r.dataset.open,null);
+};
+$('hist').onclick=e=>{
+  const tr=e.target.closest('[data-round]');if(!tr)return;
+  const td=e.target.closest('td');const idx=[...tr.children].indexOf(td);
+  if(idx<1) return;
+  openCalc(S.players[idx-1].id,+tr.dataset.round);
+};
+$('saveRound').onclick=()=>{
+  const r={};S.players.forEach(p=>r[p.id]=S.draft[p.id]||Object.assign(blank(),{manual:0}));
+  S.rounds.push(r);S.draft={};save();render();
+  window.scrollTo({top:0,behavior:'smooth'});
+  const w=winnerState();if(w&&w.top.length===1) confetti();
+};
+$('undoBtn').onclick=()=>ask('Undo the last round?',()=>{const r=S.rounds.pop();S.draft=r||{};save();render()});
+$('newBtn').onclick=()=>ask('Start over with new players?',()=>{S={phase:'setup',players:[],target:S.target,rounds:[],draft:{},editing:null};save();render()});
+$('rematchBtn').onclick=()=>ask('Rematch? Scores reset to 0.',()=>{S.rounds=[];S.draft={};save();render()});
+
+/* ---------- calculator ---------- */
+let cur=null,curPid=null,curRound=null;
+function openCalc(pid,roundIdx){
+  curPid=pid;curRound=roundIdx;
+  const src=roundIdx===null?S.draft[pid]:S.rounds[roundIdx][pid];
+  cur=src?JSON.parse(JSON.stringify(src)):blank();
+  const p=S.players.find(x=>x.id===pid);
+  $('calcName').innerHTML=`<span style="color:${p.color}">●</span> ${esc(p.name)}${roundIdx!==null?` <span style="font-size:13px;color:var(--muted)">· Rd ${roundIdx+1}</span>`:''}`;
+  $('manualIn').value=cur.manual??'';
+  drawCalc();$('calc').classList.add('on');
+}
+function drawCalc(){
+  $('nums').innerHTML=Array.from({length:13},(_,n)=>`<button class="chip ${cur.nums.includes(n)?'on':''}" data-n="${n}">${n}</button>`).join('')+
+    '';
+  $('mods').innerHTML=`<button class="mod x2 ${cur.x2?'on':''}" data-x2="1">×2</button>`+[2,4,6,8,10].map(m=>`<button class="mod ${cur.plus.includes(m)?'on':''}" data-p="${m}">+${m}</button>`).join('');
+  const typed=cur.manual!==null&&cur.manual!=='';
+  const s=score(cur);
+  $('calcTotal').textContent=cur.bust?'0':s;
+  $('bustBtn').classList.toggle('on',cur.bust);
+  let math='';
+  if(cur.bust) math='Busted — no points this round';
+  else if(typed) math='Typed score';
+  else{
+    const sum=cur.nums.reduce((a,b)=>a+b,0);
+    math=cur.nums.length?`${sum}${cur.x2?' ×2':''}${cur.plus.length?' + '+cur.plus.join(' + '):''}${cur.nums.length===7?' + 15':''}`:(cur.plus.length||cur.x2?'Modifiers only':'Tap the cards they kept');
+    math+=` · ${cur.nums.length}/7 cards`;
+  }
+  $('math').textContent=math;
+  $('f7flag').textContent=(!cur.bust&&!typed&&cur.nums.length===7)?'★ FLIP 7 BONUS +15':'';
+  document.querySelectorAll('#nums .chip,#mods .mod').forEach(b=>b.style.opacity=(cur.bust||typed)?.35:1);
+}
+$('nums').onclick=e=>{
+  const b=e.target.closest('[data-n]');if(!b)return;const n=+b.dataset.n;
+  cur.bust=false;cur.manual=null;$('manualIn').value='';
+  if(cur.nums.includes(n)) cur.nums=cur.nums.filter(x=>x!==n);
+  else if(cur.nums.length<7) cur.nums.push(n);
+  drawCalc();
+};
+$('mods').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  cur.bust=false;cur.manual=null;$('manualIn').value='';
+  if(b.dataset.x2) cur.x2=!cur.x2;
+  else{const m=+b.dataset.p;cur.plus=cur.plus.includes(m)?cur.plus.filter(x=>x!==m):[...cur.plus,m];}
+  drawCalc();
+};
+$('manualIn').oninput=()=>{const v=$('manualIn').value;cur.manual=v===''?null:v;if(v!=='')cur.bust=false;drawCalc()};
+$('bustBtn').onclick=()=>{cur.bust=!cur.bust;if(cur.bust){cur.manual=null;$('manualIn').value=''}drawCalc()};
+$('calcClose').onclick=()=>$('calc').classList.remove('on');
+$('calc').onclick=e=>{if(e.target.id==='calc')$('calc').classList.remove('on')};
+$('calcSave').onclick=()=>{
+  if(curRound===null) S.draft[curPid]=cur; else S.rounds[curRound][curPid]=cur;
+  $('calc').classList.remove('on');save();render();
+  if(curRound!==null){const w=winnerState();if(w&&w.top.length===1)confetti();}
+};
+
+/* ---------- confirm ---------- */
+let cfFn=null;
+function ask(msg,fn){$('cfMsg').textContent=msg;cfFn=fn;$('confirm').classList.add('on')}
+$('cfNo').onclick=()=>$('confirm').classList.remove('on');
+$('cfYes').onclick=()=>{$('confirm').classList.remove('on');cfFn&&cfFn()};
+
+/* ---------- confetti ---------- */
+function confetti(){
+  const c=$('confetti'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;
+  const ps=Array.from({length:160},()=>({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,r:Math.random()*6.28,s:6+Math.random()*8,col:COLORS[Math.floor(Math.random()*6)]}));
+  let f=0;(function tick(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.col;x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.66);x.restore()});if(++f<220)requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height)})();
+}
+
+function render(){
+  $('tgtLbl').textContent=S.target;
+  const g=S.phase==='game'&&S.players.length;
+  $('setup').classList.toggle('hidden',g);$('game').classList.toggle('hidden',!g);
+  if(!g) $('dock').classList.add('hidden');
+  g?renderGame():renderSetup();
+}
+load();render();
+</script>
+</body>
+</html>
